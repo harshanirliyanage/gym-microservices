@@ -11,9 +11,9 @@
 | Name | Service | Port |
 |------|---------|------|
 | Raveesha (Leader) | Member Service | 8001 |
-| Jaya | Trainer Service | 8002 |
+| Jayani | Trainer Service | 8002 |
 | Pabasara | Workout Service | 8003 |
-| Laks | Equipment Service | 8004 |
+| Lakshi | Equipment Service | 8004 |
 
 > **API Gateway runs on Port 8000**
 
@@ -284,9 +284,9 @@ git push origin main
 
 ### Each member only works in their own folder!
 - Raveesha → `member-service/`
-- Jaya → `trainer-service/`
+- Jayani → `trainer-service/`
 - Pabasara → `workout-service/`
-- Laks → `equipment-service/`
+- Lakshi → `equipment-service/`
 
 ---
 
