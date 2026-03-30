@@ -8,6 +8,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.get("/", tags=["default"])
+def read_root():
+    """Welcome endpoint for Equipment Service."""
+    return {
+        "service": "Equipment Service",
+        "version": "1.0.0",
+        "description": "Manages gym equipment inventory and condition tracking",
+        "docs": "/docs",
+        "endpoints": "/api/equipment"
+    }
+
 
 @app.get("/api/equipment", response_model=list[Equipment], tags=["Equipment"])
 def get_all_equipment():
