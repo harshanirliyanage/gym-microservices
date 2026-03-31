@@ -2,7 +2,7 @@
 
 > **IT4020 - Modern Topics in IT | Assignment 2**
 > Sri Lanka Institute of Information Technology (SLIIT)
-> Year 4 Semester 1 | 2026
+> Year 4 Semester 2 | 2026
 
 ---
 
