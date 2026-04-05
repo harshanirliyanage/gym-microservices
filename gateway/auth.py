@@ -2,24 +2,15 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 
 # ── Secret Key ────────────────────────────────────────────
-SECRET_KEY = "gym_management_secret_key_2026"
+SECRET_KEY = "gymmanagementsecretkey2026sliit"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# ── Password Hashing ──────────────────────────────────────
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
-)
+ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 60 minutes
 
 # ── Mock Users ─────────────────────────────────────────────
-# Store plain passwords and hash at verification time
 USERS_DB = {
     "admin": {
         "username": "admin",
@@ -50,7 +41,6 @@ def authenticate_user(username: str, password: str):
     user = USERS_DB.get(username)
     if not user:
         return False
-    # Simple password check for mock users
     if password != user["plain_password"]:
         return False
     return user
@@ -61,27 +51,35 @@ def create_access_token(data: dict,
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=30)
+        expire = datetime.utcnow() + timedelta(minutes=60)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode, SECRET_KEY, algorithm=ALGORITHM
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
     )
     return encoded_jwt
 
 def verify_token(token: str):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
+        # Clean token - remove Bearer if accidentally included
+        if token.startswith("Bearer "):
+            token = token[7:]
+
         payload = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM]
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
         )
         username: str = payload.get("sub")
         if username is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
+            raise credentials_exception
         return username
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
-        )
+    except JWTError as e:
+        print(f"JWT Error: {e}")  # for debugging
+        raise credentials_exception
