@@ -1,74 +1,56 @@
-from models import Equipment, EquipmentCreate, EquipmentUpdate
-from typing import Optional
+from sqlalchemy.orm import Session
+from db_models import EquipmentDB
+from models import EquipmentCreate, EquipmentUpdate
 
-# Mock database
-_equipment_db: dict[int, dict] = {
-    1: {
-        "id": 1,
-        "name": "Treadmill",
-        "category": "cardio",
-        "quantity": 5,
-        "condition": "good",
-        "purchase_year": 2021,
-    },
-    2: {
-        "id": 2,
-        "name": "Bench Press",
-        "category": "strength",
-        "quantity": 3,
-        "condition": "excellent",
-        "purchase_year": 2022,
-    },
-    3: {
-        "id": 3,
-        "name": "Yoga Mat",
-        "category": "flexibility",
-        "quantity": 20,
-        "condition": "fair",
-        "purchase_year": 2020,
-    },
-    4: {
-        "id": 4,
-        "name": "Dumbbell Set",
-        "category": "free_weights",
-        "quantity": 10,
-        "condition": "good",
-        "purchase_year": 2019,
-    },
-}
+class EquipmentDataService:
 
-_next_id: int = 5
+    def get_all_equipment(self, db: Session):
+        return db.query(EquipmentDB).all()
 
+    def get_equipment_by_id(self, db: Session, equipment_id: int):
+        return db.query(EquipmentDB).filter(
+            EquipmentDB.id == equipment_id
+        ).first()
 
-def get_all_equipment() -> list[Equipment]:
-    return [Equipment(**item) for item in _equipment_db.values()]
+    def get_equipment_by_category(self, db: Session, category: str):
+        return db.query(EquipmentDB).filter(
+            EquipmentDB.category == category
+        ).all()
 
+    def get_equipment_by_condition(self, db: Session, condition: str):
+        return db.query(EquipmentDB).filter(
+            EquipmentDB.condition == condition
+        ).all()
 
-def get_equipment_by_id(equipment_id: int) -> Optional[Equipment]:
-    item = _equipment_db.get(equipment_id)
-    return Equipment(**item) if item else None
+    def add_equipment(self, db: Session, equipment_data: EquipmentCreate):
+        new_equipment = EquipmentDB(
+            name=equipment_data.name,
+            category=equipment_data.category,
+            quantity=equipment_data.quantity,
+            condition=equipment_data.condition,
+            purchase_year=equipment_data.purchase_year
+        )
+        db.add(new_equipment)
+        db.commit()
+        db.refresh(new_equipment)
+        return new_equipment
 
-
-def create_equipment(data: EquipmentCreate) -> Equipment:
-    global _next_id
-    new_equipment = Equipment(id=_next_id, **data.model_dump())
-    _equipment_db[_next_id] = new_equipment.model_dump()
-    _next_id += 1
-    return new_equipment
-
-
-def update_equipment(equipment_id: int, data: EquipmentUpdate) -> Optional[Equipment]:
-    if equipment_id not in _equipment_db:
+    def update_equipment(self, db: Session,
+                         equipment_id: int, equipment_data: EquipmentUpdate):
+        equipment = self.get_equipment_by_id(db, equipment_id)
+        if equipment:
+            update_data = equipment_data.dict(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(equipment, key, value)
+            db.commit()
+            db.refresh(equipment)
+            return equipment
         return None
-    existing = _equipment_db[equipment_id]
-    updates = data.model_dump(exclude_unset=True)
-    existing.update(updates)
-    _equipment_db[equipment_id] = existing
-    return Equipment(**existing)
 
-
-def delete_equipment(equipment_id: int) -> bool:
-    if equipment_id not in _equipment_db:
+    def delete_equipment(self, db: Session, equipment_id: int):
+        equipment = self.get_equipment_by_id(db, equipment_id)
+        if equipment:
+            db.delete(equipment)
+            db.commit()
+            return True
         return False
-    del _equipment_db[equipment_id]
-    return True
